@@ -20,6 +20,7 @@ services:
     depends_on:
     - postgres
     environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       EXECUTOR: Local
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
