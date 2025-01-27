@@ -1,0 +1,1 @@
+curl -O https://jdbc.postgresql.org/download/postgresql-42.7.5.jar

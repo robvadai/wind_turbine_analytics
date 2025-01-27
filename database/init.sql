@@ -1,0 +1,13 @@
+CREATE DATABASE wind_turbine_analytics;
+CREATE USER wind_turbine_analytics WITH PASSWORD 'wind_turbine_analytics';
+GRANT ALL PRIVILEGES ON DATABASE wind_turbine_analytics TO wind_turbine_analytics;
+ALTER DATABASE wind_turbine_analytics OWNER TO wind_turbine_analytics;
+\c wind_turbine_analytics;
+CREATE SCHEMA bronze;
+CREATE SCHEMA silver;
+CREATE SCHEMA gold;
+CREATE SCHEMA quarantine;
+ALTER SCHEMA bronze OWNER TO wind_turbine_analytics;
+ALTER SCHEMA silver OWNER TO wind_turbine_analytics;
+ALTER SCHEMA gold OWNER TO wind_turbine_analytics;
+ALTER SCHEMA quarantine OWNER TO wind_turbine_analytics;

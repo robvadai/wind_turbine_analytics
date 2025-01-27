@@ -1,0 +1,9 @@
+bin/
+build/
+include/
+lib/
+share/
+*.egg-info/
+pyvenv.cfg
+.idea/
+__pycache__/
