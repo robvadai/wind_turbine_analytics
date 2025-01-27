@@ -1,7 +1,13 @@
 Wind Turbine Analytics
 ======================
 
-## Running the jbo
+## Summary and purpose
+
+
+## Technical overview
+
+
+## Running the analytics suite
 
 ### Set up
 
@@ -17,7 +23,7 @@ Wind Turbine Analytics
 
     `docker compose exec -it postgres bash -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -a -f /tmp/setup_connections.sql'`
 
-## Tear down
+### Tear down
 
 `docker compose down`
 

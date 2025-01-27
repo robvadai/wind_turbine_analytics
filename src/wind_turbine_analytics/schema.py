@@ -6,8 +6,7 @@ WIND_TURBINE_TELEMETRY_SCHEMA = StructType([
     StructField("turbine_id", StringType(), True),
     StructField("wind_speed", StringType(), True),
     StructField("wind_direction", StringType(), True),
-    StructField("power_output", StringType(), True),
-    StructField("event_id", StringType(), True)
+    StructField("power_output", StringType(), True)
 ])
 
 WIND_TURBINE_TELEMETRY_BRONZE = StructType([
@@ -16,7 +15,7 @@ WIND_TURBINE_TELEMETRY_BRONZE = StructType([
     StructField("wind_speed", StringType(), True),
     StructField("wind_direction", StringType(), True),
     StructField("power_output", StringType(), True),
-    StructField("event_id", StringType(), True)
+    StructField("event_id", StringType(), False)
 ])
 
 WIND_TURBINE_SCHEMA_SILVER = StructType([

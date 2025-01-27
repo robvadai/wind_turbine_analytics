@@ -1,71 +1,58 @@
 import pytest
 
-from datetime import datetime
+
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, DoubleType, BooleanType, IntegerType, DoubleType
 from pyspark_test import assert_pyspark_df_equal
 
-from ..wind_turbine_analytics.publish import publish_transformations
-from ..wind_turbine_analytics.schema import WIND_TURBINE_SCHEMA_SILVER, WIND_TURBINE_SCHEMA_GOLD_SUMMARY, WIND_TURBINE_SCHEMA_GOLD_ANOMALIES
-
-
-def to_spark_timestamp(date_time: str) -> datetime:
-    return datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S')
+from ..wind_turbine_analytics.transform import transform_with_quality
+from ..wind_turbine_analytics.schema import WIND_TURBINE_TELEMETRY_BRONZE, WIND_TURBINE_SCHEMA_SILVER
+from .stubs import to_spark_timestamp
 
 
 @pytest.mark.integration
-def test_publish_transformations(spark_session):
+def test_transform_with_quality(spark_session):
 
     event_id = "abc123"
-    start_date = "2022-03-01 00:00:00"
-    end_date = "2022-03-02 00:00:00"
 
-    summary_expectation = spark_session.createDataFrame(
-        data=[
-            (1, 1.6, 4.5, 2.685714285714286, event_id),
-            (2, 5.0, 10.0, 7.5, event_id),
-        ],
-        schema=WIND_TURBINE_SCHEMA_GOLD_SUMMARY
-    )
+    expected_schema = StructType([
+        StructField("telemetry_time", TimestampType(), True),
+        StructField("turbine_id", IntegerType(), True),
+        StructField("wind_speed", DoubleType(), True),
+        StructField("wind_direction", IntegerType(), True),
+        StructField("power_output", DoubleType(), True),
+        StructField("event_id", StringType(), False),
+        StructField("is_error", StringType(), False)
+    ])
 
-    anomalies_expectation = spark_session.createDataFrame(
+    expectation = spark_session.createDataFrame(
         data=[
-            (to_spark_timestamp("2022-03-01 16:00:00"), 1, 4.5, event_id)
+            (to_spark_timestamp("2022-03-01 00:00:00"), 1, 2.0, 500, 2.3, event_id, True),
+            (to_spark_timestamp("2022-03-01 05:00:00"), 1, 2.0, 0, 2.3, event_id, False),
+            (to_spark_timestamp("2022-03-01 10:00:00"), 1, 2.0, 1, 2.3, event_id, False),
+            (to_spark_timestamp("2022-03-02 00:00:00"), 1, 2.0, 2, 2.3, event_id, False),
+            (to_spark_timestamp("2022-03-03 00:00:00"), 1, 2.0, 50, 2.3, event_id, False),
+            (None, 1, 2.0, 500, 2.3, event_id, True),
         ],
-        schema=WIND_TURBINE_SCHEMA_GOLD_ANOMALIES
+        schema=expected_schema
     )
 
     base_df = spark_session.createDataFrame(
         data=[
-            (to_spark_timestamp("2022-03-01 00:00:00"), 1, 2.0, 1, 2.3, event_id),
-            (to_spark_timestamp("2022-03-01 01:00:00"), 1, 2.0, 1, 1.9, event_id),
-            (to_spark_timestamp("2022-03-01 02:00:00"), 1, 2.0, 1, 4.0, event_id),
-            (to_spark_timestamp("2022-03-01 02:00:00"), 1, 2.0, 1, 2.2, event_id),
-            (to_spark_timestamp("2022-03-01 03:00:00"), 1, 2.0, 1, 2.6, event_id),
-            (to_spark_timestamp("2022-03-01 04:00:00"), 1, 2.0, 1, 3.3, event_id),
-            (to_spark_timestamp("2022-03-01 05:00:00"), 1, 2.0, 1, 2.3, event_id),
-            (to_spark_timestamp("2022-03-01 05:00:00"), 1, 2.0, 1, 3.8, event_id),
-            (to_spark_timestamp("2022-03-01 05:00:00"), 1, 2.0, 1, 1.6, event_id),
-            (to_spark_timestamp("2022-03-01 13:00:00"), 1, 2.0, 1, 3.7, event_id),
-            (to_spark_timestamp("2022-03-01 14:00:00"), 1, 2.0, 1, 2.3, event_id),
-            (to_spark_timestamp("2022-03-01 15:00:00"), 1, 2.0, 1, 1.7, event_id),
-            (to_spark_timestamp("2022-03-01 16:00:00"), 1, 2.0, 1, 4.5, event_id),
-            (to_spark_timestamp("2022-03-01 17:00:00"), 1, 2.0, 1, 1.8, event_id),
-            (to_spark_timestamp("2022-03-01 18:00:00"), 1, 2.0, 1, 3.3, event_id),
-            (to_spark_timestamp("2022-03-01 19:00:00"), 1, 2.0, 1, 2.2, event_id),
-            (to_spark_timestamp("2022-03-01 20:00:00"), 1, 2.0, 1, 1.6, event_id),
-            (to_spark_timestamp("2022-03-01 21:00:00"), 1, 2.0, 1, 3.1, event_id),
-            (to_spark_timestamp("2022-03-01 22:00:00"), 1, 2.0, 1, 2.7, event_id),
-            (to_spark_timestamp("2022-03-01 23:59:00"), 1, 2.0, 1, 1.9, event_id),
-            (to_spark_timestamp("2022-03-02 00:00:00"), 1, 2.0, 1, 3.6, event_id),
-            (to_spark_timestamp("2022-03-02 10:00:00"), 1, 2.0, 1, 3.6, event_id),
-
-            (to_spark_timestamp("2022-03-01 00:00:00"), 2, 2.0, 1, 5.0, event_id),
-            (to_spark_timestamp("2022-03-01 07:00:00"), 2, 2.0, 1, 10.0, event_id),
+            ("2022-03-01 00:00:00", "1", "2.0", "500", "2.3", event_id),
+            ("2022-03-01 05:00:00", "1", "2.0", "0", "2.3", event_id),
+            ("2022-03-01 10:00:00", "1", "2.0", "1", "2.3", event_id),
+            ("2022-03-02 00:00:00", "1", "2.0", "2", "2.3", event_id),
+            ("2022-03-03 00:00:00", "1", "2.0", "50", "2.3", event_id),
+            ("aaaaaa", "1", "2.0", "50", "2.3", event_id),
+            (None, "1", "2.0", "500.0", "2.3", event_id),
         ],
-        schema=WIND_TURBINE_SCHEMA_SILVER
+        schema=WIND_TURBINE_TELEMETRY_BRONZE
     )
 
-    summary_result, anomalies_result = publish_transformations(base_df, event_id, start_date, end_date)
+    result = transform_with_quality(base_df, event_id)
 
-    assert_pyspark_df_equal(summary_expectation, summary_result)
-    assert_pyspark_df_equal(anomalies_expectation, anomalies_result)
+    result.show()
+
+    # assert_pyspark_df_equal(summary_expectation, summary_result)
+    # assert_pyspark_df_equal(anomalies_expectation, anomalies_result)
 

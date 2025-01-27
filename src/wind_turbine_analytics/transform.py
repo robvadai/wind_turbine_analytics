@@ -1,20 +1,12 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
 
-def transform(spark_session: SparkSession, event_id: str) -> None:
-
-    df = spark_session.read.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
-        table='bronze.wind_turbine_telemetry',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics",
-                    "driver": "org.postgresql.Driver"},
-    ).filter(
+def transform_with_quality(wind_turbine_telemetry: DataFrame, event_id: str) -> DataFrame:
+    return wind_turbine_telemetry.filter(
         F.col("event_id").eqNullSafe(event_id)
-    )
-
-    data_types_adjusted = df.select(
+    ).select(
         F.to_timestamp(F.col("timestamp")).alias("telemetry_time"),
         F.col("turbine_id").cast(T.IntegerType()).alias("turbine_id"),
         F.col("wind_speed").cast(T.DoubleType()).alias("wind_speed"),
@@ -29,7 +21,19 @@ def transform(spark_session: SparkSession, event_id: str) -> None:
         F.col("wind_direction").isNull() |
         ~F.col("wind_direction").between(0, 359) |
         F.col("power_output").isNull()
-    ).cache()
+    )
+
+
+def transform(spark_session: SparkSession, event_id: str) -> None:
+
+    df = spark_session.read.jdbc(
+        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        table='bronze.wind_turbine_telemetry',
+        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics",
+                    "driver": "org.postgresql.Driver"},
+    )
+
+    data_types_adjusted = transform_with_quality(df, event_id).cache()
 
     data_types_adjusted.filter(
         ~F.col("is_error")
