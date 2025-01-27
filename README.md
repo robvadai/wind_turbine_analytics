@@ -4,6 +4,14 @@ Wind Turbine Analytics
 ## Summary and purpose
 
 
+## System requirements
+
+Tested on macOS Sequoia 15.2
+
+Software requirements:
+- [Docker](https://www.docker.com)
+- [Python 3.10](https://www.python.org)
+
 ## Technical overview
 
 
@@ -60,10 +68,15 @@ Bronze table content:
 Silver table content:
 ![Silver](./docs/db-silver.png)
 
+Quarantine table content:
+![Quarantine](./docs/db-quarantine.png)
+
+Gold Summary table content:
+![Gold Summary](./docs/db-gold-summary.png)
 
 
-
-
+Quarantine Anomalies table content:
+![Quarantine Anomalies](./docs/db-gold-anomalies.png)
 
 ### Tear down
 
@@ -71,8 +84,9 @@ Silver table content:
 
 ## Testing
 
+*It's recommended to use a [Virtual Environment (venv)](https://docs.python.org/3/library/venv.html) to install packages*
+
 ```sh
-. ./bin/activate
 pip install '.[dev]'
 pytest --cache-clear --capture=no -m "integration" ./src
 ```

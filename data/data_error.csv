@@ -1,0 +1,2 @@
+timestamp,turbine_id,wind_speed,wind_direction,power_output
+INVALID,1,11.8,169,2.7
