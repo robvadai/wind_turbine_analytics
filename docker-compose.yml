@@ -21,6 +21,9 @@ services:
     - postgres
     environment:
       EXECUTOR: Local
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
     volumes:
     - ./driver:/usr/local/spark/driver
     - ./dags:/usr/local/airflow/dags

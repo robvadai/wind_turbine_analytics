@@ -57,27 +57,26 @@ def to_silver(wind_turbine_telemetry: DataFrame) -> DataFrame:
     )
 
 
-def transform(spark_session: SparkSession, event_id: str) -> None:
+def transform(spark_session: SparkSession, event_id: str, db_connection: dict) -> None:
 
     df = spark_session.read.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='bronze.wind_turbine_telemetry',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics",
-                    "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"]
     )
 
     data_types_adjusted = transform_with_quality(df, event_id).cache()
 
     to_silver(data_types_adjusted).write.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='silver.wind_turbine_telemetry',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics", "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"],
         mode="append",
     )
 
     to_quarantine(data_types_adjusted).write.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='quarantine.wind_turbine_telemetry',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics", "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"],
         mode="append",
     )

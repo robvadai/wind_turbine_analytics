@@ -51,12 +51,11 @@ def publish_transformations(wind_turbine_telemetry: DataFrame, event_id: str, st
     return summary, anomalies
 
 
-def publish(spark_session: SparkSession, event_id: str, start_datetime: str, end_datetime: str) -> None:
+def publish(spark_session: SparkSession, event_id: str, db_connection: dict, start_datetime: str, end_datetime: str) -> None:
     df = spark_session.read.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='silver.wind_turbine_telemetry',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics",
-                    "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"]
     ).filter(
         F.col("event_id").eqNullSafe(event_id) &
         F.col("telemetry_time").between(start_datetime, end_datetime)
@@ -94,9 +93,9 @@ def publish(spark_session: SparkSession, event_id: str, start_datetime: str, end
         F.col("mean_power_output"),
         F.lit(event_id).alias("event_id")
     ).write.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='gold.summary_statistics',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics", "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"],
         mode="append",
     )
 
@@ -105,8 +104,8 @@ def publish(spark_session: SparkSession, event_id: str, start_datetime: str, end
         F.col("t.power_output"),
         F.lit(event_id).alias("event_id")
     ).write.jdbc(
-        url='jdbc:postgresql://postgres:5432/wind_turbine_analytics',
+        url=db_connection["jdbc_connection_string"],
         table='gold.turbine_power_output_anomaly',
-        properties={"user": "wind_turbine_analytics", "password": "wind_turbine_analytics", "driver": "org.postgresql.Driver"},
+        properties=db_connection["jdbc_connection_properties"],
         mode="append",
     )

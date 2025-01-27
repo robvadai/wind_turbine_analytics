@@ -3,7 +3,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.utils.dates import days_ago
 from airflow.datasets import Dataset
-from airflow.providers.jdbc.hooks.jdbc import JdbcHook
+from airflow.hooks.base_hook import BaseHook
 
 # spark_master = "spark://spark:7077"
 spark_master = "local[*]"
@@ -16,14 +16,13 @@ args = {
     'owner': 'Airflow',
 }
 
-# postgres_jdbc_local_hook = JdbcHook(jdbc_conn_id="postgres_jdbc_local")
+jdbc_connection = BaseHook.get_connection("postgres_local")
 
-# print(postgres_jdbc_local_hook.get_conn())
-
-WIND_TURBINE_ANALYTICS_QUARANTINE_DATASET = Dataset("wind_turbine_analytics_quarantine")
-WIND_TURBINE_ANALYTICS_BRONZE_DATASET = Dataset("wind_turbine_analytics_bronze")
-WIND_TURBINE_ANALYTICS_SILVER_DATASET = Dataset("wind_turbine_analytics_silver")
-WIND_TURBINE_ANALYTICS_GOLD_DATASET = Dataset("wind_turbine_analytics_gold")
+WIND_TURBINE_ANALYTICS_QUARANTINE_DATASET = Dataset("postgres://postgres:5432/wind_turbine_analytics?schema=quarantine&table=wind_turbine_telemetry")
+WIND_TURBINE_ANALYTICS_BRONZE_DATASET = Dataset("postgres://postgres:5432/wind_turbine_analytics?schema=bronze&table=wind_turbine_telemetry")
+WIND_TURBINE_ANALYTICS_SILVER_DATASET = Dataset("postgres://postgres:5432/wind_turbine_analytics?schema=silver&table=wind_turbine_telemetry")
+WIND_TURBINE_ANALYTICS_GOLD_SUMMARY_DATASET = Dataset("postgres://postgres:5432/wind_turbine_analytics?schema=gold&table=summary_statistics")
+WIND_TURBINE_ANALYTICS_GOLD_ANOMALY_DATASET = Dataset("postgres://postgres:5432/wind_turbine_analytics?schema=gold&table=turbine_power_output_anomaly")
 
 with DAG(
     dag_id='wind_turbine_analytics',
@@ -47,11 +46,11 @@ with DAG(
         conn_id='spark_local',
         verbose=1,
         conf={
-            "spark.master": spark_master,
+            # "spark.master": spark_master,
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
-        application_args=["ingest", "{{ run_id }}", file_path],
+        application_args=["ingest", "{{ run_id }}", jdbc_connection.host, str(jdbc_connection.port), jdbc_connection.login, jdbc_connection.password, file_path],
         outlets=[WIND_TURBINE_ANALYTICS_BRONZE_DATASET],
         dag=dag
     )
@@ -68,7 +67,7 @@ with DAG(
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
-        application_args=["transform", "{{ run_id }}"],
+        application_args=["transform", "{{ run_id }}", jdbc_connection.host, str(jdbc_connection.port), jdbc_connection.login, jdbc_connection.password],
         outlets=[WIND_TURBINE_ANALYTICS_QUARANTINE_DATASET, WIND_TURBINE_ANALYTICS_SILVER_DATASET],
         dag=dag
     )
@@ -85,8 +84,8 @@ with DAG(
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
-        application_args=["publish", "{{ run_id }}", dag.params['publish_start_datetime'], dag.params['publish_end_datetime']],
-        outlets=[WIND_TURBINE_ANALYTICS_GOLD_DATASET],
+        application_args=["publish", "{{ run_id }}", jdbc_connection.host, str(jdbc_connection.port), jdbc_connection.login, jdbc_connection.password, dag.params['publish_start_datetime'], dag.params['publish_end_datetime']],
+        outlets=[WIND_TURBINE_ANALYTICS_GOLD_SUMMARY_DATASET, WIND_TURBINE_ANALYTICS_GOLD_ANOMALY_DATASET],
         dag=dag
     )
 
