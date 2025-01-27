@@ -1,7 +1,9 @@
 import sys
 from pyspark.sql import SparkSession
 
-from wind_turbine_analytics.tasks import ingest, transform, publish
+from wind_turbine_analytics.ingest import ingest
+from wind_turbine_analytics.transform import transform
+from wind_turbine_analytics.publish import publish
 
 
 def main():
