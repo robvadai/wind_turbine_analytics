@@ -5,8 +5,10 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+      PGPASSWORD: airflow # for PSQL command-line utility
     volumes:
-    - ./database/init.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    - ./database/setup_connections.sql:/tmp/setup_connections.sql
   adminer:
     image: adminer
     restart: always
