@@ -3,9 +3,9 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "line-of-business"
-version = "0.5.1+0"
-description = "My package description"
+name = "wind-turbine-analytics"
+version = "0.1.0"
+description = "Wind turbine analytics"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
@@ -16,9 +16,12 @@ dev = [
     "pyspark-test==0.2.0"
 ]
 
-[project.urls]
-publish = "s3://amlqv-emr-dev/deployments"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 exclude = ["test*"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers"
+markers = [
+    "integration: marks tests as integration tests"
+]
