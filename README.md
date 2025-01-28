@@ -1,8 +1,9 @@
 Wind Turbine Analytics
 ======================
 
-## Summary and purpose
+## Summary
 
+The analytics suite calculates summary statistics and finds wind turbine power output anomalies, using wind turbine telemetry data.
 
 ## System requirements
 
@@ -13,6 +14,27 @@ Software requirements:
 - [Python 3.10](https://www.python.org)
 
 ## Technical overview
+
+### Key considerations
+
+The solution uses [Apache Spark](https://spark.apache.org) for data transformations, to ensure:
+- a standard stack: Spark is used by many organisations as well as being a foundation technology to the commercial [Databricks Intelligence Platform](https://www.databricks.com); it has a wide range of packages and tooling available
+- scalability: Spark is a distributed data processing framework, supporting data partitioning and distributing the processing of these partitions over a cluster of machines
+- adaptability: 
+
+
+The solution uses [Apache Airflow](https://airflow.apache.org) for job orchestration, to ensure:
+- 
+
+### Assumptions
+
+- The wind turbine telemetry data is provided as comma-delimeted CSV files, having the first row as headers.
+- Timestamp information is only accepted in the Spark timestamp format, and only timestamps compatiblw with the [to_timestamp](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.to_timestamp.html) function are accepted.
+- The solution is running Spark in local mode, not in distributed mode - though the master configuration (`local[*]`) will use all available CPU cores (as defined as an Airflow connection in [./database/setup_connections.sql](./database/setup_connections.sql))
+
+### Data and schemas
+
+
 
 
 ## Running the analytics suite
@@ -73,7 +95,6 @@ Quarantine table content:
 
 Gold Summary table content:
 ![Gold Summary](./docs/db-gold-summary.png)
-
 
 Quarantine Anomalies table content:
 ![Quarantine Anomalies](./docs/db-gold-anomalies.png)

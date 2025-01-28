@@ -5,12 +5,10 @@ from airflow.utils.dates import days_ago
 from airflow.datasets import Dataset
 from airflow.hooks.base_hook import BaseHook
 
-# spark_master = "spark://spark:7077"
-spark_master = "local[*]"
 spark_app_name = "Spark Hello World"
 file_path = "/usr/local/spark/data"
 
-JDBC_DRIVER_PATH = "/usr/local/spark/driver/postgresql-42.7.5.jar" #"os.environ['JDBC_DRIVER_PATH']
+JDBC_DRIVER_PATH = "/usr/local/spark/driver/postgresql-42.7.5.jar"
 
 args = {
     'owner': 'Airflow',
@@ -42,11 +40,9 @@ with DAG(
         task_id="ingest",
         application="/usr/local/spark/app/driver.py",
         name=spark_app_name,
-        # conn_id="spark_default",
         conn_id='spark_local',
         verbose=1,
         conf={
-            # "spark.master": spark_master,
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
@@ -59,11 +55,9 @@ with DAG(
         task_id="transform",
         application="/usr/local/spark/app/driver.py",
         name=spark_app_name,
-        # conn_id="spark_default",
         conn_id='spark_local',
         verbose=1,
         conf={
-            "spark.master": spark_master,
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
@@ -76,11 +70,9 @@ with DAG(
         task_id="publish",
         application="/usr/local/spark/app/driver.py",
         name=spark_app_name,
-        # conn_id="spark_default",
         conn_id='spark_local',
         verbose=1,
         conf={
-            "spark.master": spark_master,
             "spark.driver.extraClassPath": JDBC_DRIVER_PATH,
             "spark.executor.extraClassPath": JDBC_DRIVER_PATH
         },
