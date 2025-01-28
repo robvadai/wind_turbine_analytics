@@ -60,7 +60,8 @@ In the PostgreSQL database, the following tables are created by the Spark job in
 
 Apart from the attributes provided, an additional `event_id` attribute is added to each dataset, and in turn, to each table in PostgreSQL.
 The purpose of this `event_id` attribute is to distinguish between the different job runs.
-Its value is defined as the Airflow run ID, as seen in the DAG definition [dags/wind_turbine_analytics.py](./dags/wind_turbine_analytics.py): `{{ run_id }}`
+Its value is defined as the Airflow run ID, as seen in the DAG definition [dags/wind_turbine_analytics.py](./dags/wind_turbine_analytics.py): `{{ run_id }}`.
+Additional information in the [Airflow documentation](https://airflow.apache.org/docs/apache-airflow/stable/templates-ref.html).
 
 ### Solution design
 
