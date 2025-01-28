@@ -35,6 +35,7 @@ The solution uses a [Medallion architecture](https://www.databricks.com/glossary
 - Timestamp information is only accepted in the Spark timestamp format, and only timestamps compatiblw with the [to_timestamp](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.to_timestamp.html) function are accepted.
 - The solution is running Spark in local mode, not in distributed mode - though the master configuration (`local[*]`) will use all available CPU cores (as defined as an Airflow connection in [database/setup_connections.sql](./database/setup_connections.sql))
 - The PostreSQL database, part of the Airflow deployment, is used as a data store, however definining the dedicated `wind_turbine_analytics` database for the purpose of this exercise. As defined in [database/init.sql](./database/init.sql).
+- Each job run is uniquely distinguished by an `event_id` attribute that is added to the datasets.
 
 ### Data and schemas
 
@@ -56,6 +57,10 @@ In the PostgreSQL database, the following tables are created by the Spark job in
     - `summary_statistics` table - aggregated data, summary statistics for each turbine, within the start and end dates provided in the DAG
     - `turbine_power_output_anomaly` table - turbines with anomalies in their power output, within the start and end dates provided in the DAG
         ![DAG trigger parameters](./docs/airflow-dag-trigger.png)
+
+Apart from the attributes provided, an additional `event_id` attribute is added to each dataset, and in turn, to each table in PostgreSQL.
+The purpose of this `event_id` attribute is to distinguish between the different job runs.
+Its value is defined as the Airflow run ID, as seen in the DAG definition [dags/wind_turbine_analytics.py](./dags/wind_turbine_analytics.py): `{{ run_id }}`
 
 ### Solution design
 
